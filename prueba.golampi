@@ -1,0 +1,69 @@
+func main() {
+    println("=== Prueba de Golampi ===")
+    
+    // Declaración de variables
+    var x int32 = 10
+    var y int32 = 5
+    println("x =", x)
+    println("y =", y)
+    
+    // Declaración corta
+    z := 15
+    println("z =", z)
+    
+    // Operaciones aritméticas
+    suma := x + y
+    println("x + y =", suma)
+    
+    resta := x - y
+    println("x - y =", resta)
+    
+    mult := x * y
+    println("x * y =", mult)
+    
+    div := x / y
+    println("x / y =", div)
+    
+    // Asignación compuesta
+    x += 5
+    println("x después de += 5:", x)
+    
+    // Constantes
+    const PI float32 = 3.14
+    println("PI =", PI)
+    
+    // Operadores relacionales
+    println("x > y:", x > y)
+    println("x < y:", x < y)
+    println("x == 15:", x == 15)
+    
+    // If/else
+    if x > 10 {
+        println("x es mayor que 10")
+    } else {
+        println("x es menor o igual a 10")
+    }
+    
+    // For loop (estilo C)
+    println("Contando del 1 al 5:")
+    for i := 1; i <= 5; i += 1 {
+        println(i)
+    }
+    
+    // For estilo while
+    contador := 3
+    println("Cuenta regresiva:")
+    for contador > 0 {
+        println(contador)
+        contador -= 1
+    }
+    
+    // Operadores lógicos
+    a := true
+    b := false
+    println("true && false:", a && b)
+    println("true || false:", a || b)
+    println("!true:", !a)
+    
+    println("=== Fin de pruebas ===")
+}
