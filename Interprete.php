@@ -148,6 +148,55 @@ class Interprete extends GramaticaBaseVisitor {
     }
 
     /**
+     * Ejecuta una función built-in del lenguaje
+     */
+    private function ejecutarBuiltin($nombre, $args, $ctx) {
+        $linea = $ctx->getStart()->getLine();
+        $col   = $ctx->getStart()->getCharPositionInLine();
+
+        switch ($nombre) {
+            case 'len':
+                if (count($args) < 1) {
+                    $this->manejadorErrores->agregarError('Semántico', "len() requiere un argumento", $linea, $col);
+                    return new Valor('int32', 0);
+                }
+                $v = $args[0];
+                if ($v->tipo === 'array') {
+                    return new Valor('int32', count($v->valor));
+                } elseif ($v->tipo === 'string') {
+                    return new Valor('int32', strlen($v->valor));
+                } else {
+                    $this->manejadorErrores->agregarError('Semántico', "len() solo acepta arreglos o strings", $linea, $col);
+                    return new Valor('int32', 0);
+                }
+
+            case 'now':
+                // Devuelve timestamp Unix como int64
+                return new Valor('int32', (int)time());
+
+            case 'substr':
+                if (count($args) < 3) {
+                    $this->manejadorErrores->agregarError('Semántico', "substr() requiere 3 argumentos: string, inicio, longitud", $linea, $col);
+                    return new Valor('string', '');
+                }
+                $s      = (string)$args[0]->valor;
+                $inicio = (int)$args[1]->valor;
+                $long   = (int)$args[2]->valor;
+                return new Valor('string', substr($s, $inicio, $long));
+
+            case 'typeOf':
+                if (count($args) < 1) {
+                    $this->manejadorErrores->agregarError('Semántico', "typeOf() requiere un argumento", $linea, $col);
+                    return new Valor('string', '');
+                }
+                return new Valor('string', $args[0]->tipo);
+
+            default:
+                return new Valor('nil', null);
+        }
+    }
+
+    /**
      * Ejecuta una función
      */
     private function ejecutarFuncion($nombre, $argumentos) {
@@ -261,8 +310,9 @@ class Interprete extends GramaticaBaseVisitor {
         
         if ($literal->RUNE_LITERAL() !== null) {
             $texto = $literal->getText();
-            $char = substr($texto, 1, -1);
-            return new Valor('rune', $char);
+            $char = substr($texto, 1, -1); // Quitar comillas simples
+            // Almacenar como código ASCII
+            return new Valor('rune', strlen($char) > 0 ? ord($char) : 0);
         }
         
         if ($literal->TRUE() !== null) {
@@ -389,7 +439,8 @@ class Interprete extends GramaticaBaseVisitor {
     public function visitStmtVar($ctx) {
         $varCtx = $ctx->declaracionVariable();
         $ids = $varCtx->ID();
-        $tipo = $this->obtenerTipo($varCtx->tipo());
+        $tipoCtx = $varCtx->tipo();
+        $tipo = $this->obtenerTipo($tipoCtx);
         
         $valores = [];
         if ($varCtx->listaExpresiones() !== null) {
@@ -400,12 +451,27 @@ class Interprete extends GramaticaBaseVisitor {
         
         foreach ($ids as $i => $idNode) {
             $nombre = $idNode->getText();
-            $valor = isset($valores[$i]) ? $valores[$i] : Valor::valorPorDefecto($tipo);
+            
+            if (isset($valores[$i])) {
+                $val = $valores[$i];
+                $valRaw = $val->valor;
+                $valTipo = $val->tipo;
+            } else {
+                // Valor por defecto según tipo
+                if ($tipo === 'array') {
+                    $valRaw = $this->crearArregloVacio($tipoCtx);
+                    $valTipo = 'array';
+                } else {
+                    $def = Valor::valorPorDefecto($tipo);
+                    $valRaw = $def->valor;
+                    $valTipo = $tipo;
+                }
+            }
             
             $exito = $this->tablaSimbolos->insertar(
                 $nombre,
-                $tipo,
-                $valor->valor,
+                $valTipo,
+                $valRaw,
                 $idNode->getSymbol()->getLine(),
                 $idNode->getSymbol()->getCharPositionInLine()
             );
@@ -432,7 +498,51 @@ class Interprete extends GramaticaBaseVisitor {
         if ($typeCtx->TYPE_BOOL() !== null) return 'bool';
         if ($typeCtx->TYPE_RUNE() !== null) return 'rune';
         if ($typeCtx->TYPE_STRING() !== null) return 'string';
+        if ($typeCtx->LBRACKET() !== null) return 'array'; // [n]tipo
         return 'unknown';
+    }
+
+    /**
+     * Obtiene meta-información de un tipo arreglo: ['elementType', 'size']
+     */
+    private function obtenerInfoArray($typeCtx, &$tamano, &$tipoElemento) {
+        if ($typeCtx->LBRACKET() !== null) {
+            $tamanoVal = $this->visit($typeCtx->expresion());
+            $tamano = ($tamanoVal instanceof Valor) ? (int)$tamanoVal->valor : 0;
+            $subTipo = $typeCtx->tipo();
+            if ($subTipo->LBRACKET() !== null) {
+                // Arreglo multidimensional: elemento es también un arreglo
+                $tipoElemento = 'array';
+            } else {
+                $tipoElemento = $this->obtenerTipo($subTipo);
+            }
+            return $subTipo; // Retorna el contexto del tipo interno
+        }
+        return null;
+    }
+
+    /**
+     * Crea un arreglo con valores por defecto dado un contexto de tipo
+     */
+    private function crearArregloVacio($typeCtx) {
+        if ($typeCtx->LBRACKET() !== null) {
+            $tamanoVal = $this->visit($typeCtx->expresion());
+            $tamano = ($tamanoVal instanceof Valor) ? (int)$tamanoVal->valor : 0;
+            $subTipoCtx = $typeCtx->tipo();
+            $arr = [];
+            for ($i = 0; $i < $tamano; $i++) {
+                if ($subTipoCtx->LBRACKET() !== null) {
+                    // Multidimensional
+                    $arr[] = $this->crearArregloVacio($subTipoCtx);
+                } else {
+                    $eleTipo = $this->obtenerTipo($subTipoCtx);
+                    $defaultVal = Valor::valorPorDefecto($eleTipo);
+                    $arr[] = $defaultVal->valor;
+                }
+            }
+            return $arr;
+        }
+        return [];
     }
 
     /**
@@ -526,6 +636,20 @@ class Interprete extends GramaticaBaseVisitor {
                     );
                 }
             }
+        } elseif (strpos($classname, 'AssignIncContext') !== false) {
+            // Incremento: i++
+            $nombre = $assignCtx->ID(0)->getText();
+            $simbolo = $this->tablaSimbolos->buscar($nombre);
+            if ($simbolo !== null && !$simbolo->esConstante) {
+                $this->tablaSimbolos->actualizar($nombre, $simbolo->valor + 1);
+            }
+        } elseif (strpos($classname, 'AssignDecContext') !== false) {
+            // Decremento: i--
+            $nombre = $assignCtx->ID(0)->getText();
+            $simbolo = $this->tablaSimbolos->buscar($nombre);
+            if ($simbolo !== null && !$simbolo->esConstante) {
+                $this->tablaSimbolos->actualizar($nombre, $simbolo->valor - 1);
+            }
         } else {
             // Asignación compuesta (AssignCompoundContext)
             $nombre = $assignCtx->ID()->getText();
@@ -541,7 +665,7 @@ class Interprete extends GramaticaBaseVisitor {
                 return null;
             }
             
-            $valorActual = $simbolo->valor;
+            $valorActual = new Valor($simbolo->tipo, $simbolo->valor); // Crear Valor desde tipo+valor crudo
             $valorNuevo = $this->visit($assignCtx->expresion());
             
             // Determinar el operador
@@ -597,7 +721,20 @@ class Interprete extends GramaticaBaseVisitor {
      * Visita asignación compuesta
      */
     public function visitAssignCompound($ctx) {
-        // ctx ya es un AssignCompoundContext que extiende AsignacionContext
+        return $this->visitAsignacion($ctx);
+    }
+
+    /**
+     * Visita i++
+     */
+    public function visitAssignInc($ctx) {
+        return $this->visitAsignacion($ctx);
+    }
+
+    /**
+     * Visita i--
+     */
+    public function visitAssignDec($ctx) {
         return $this->visitAsignacion($ctx);
     }
 
@@ -932,6 +1069,11 @@ class Interprete extends GramaticaBaseVisitor {
         $izq = $this->visit($ctx->expresion(0));
         $der = $this->visit($ctx->expresion(1));
         
+        // Operaciones con nil devuelven nil
+        if ($izq->esNil() || $der->esNil()) {
+            return new Valor('nil', null);
+        }
+        
         $operador = $ctx->getChild(1)->getText();
         $resultado = false;
         
@@ -1041,12 +1183,45 @@ class Interprete extends GramaticaBaseVisitor {
         $exprFunc = $ctx->expresion();
         $className = get_class($exprFunc);
         
-        // Verificar si la expresión es un ID
+        // Manejar fmt.Println / fmt.Print (acceso a struct = namespace.función en Go)
+        if (strpos($className, 'ExprStructAccessContext') !== false) {
+            $objeto = $exprFunc->expresion()->getText(); // 'fmt'
+            $metodo = $exprFunc->ID()->getText();        // 'Println' o 'Print'
+            
+            if ($objeto === 'fmt' && ($metodo === 'Println' || $metodo === 'Print')) {
+                // Evaluar todos los argumentos
+                $partes = [];
+                if ($ctx->listaExpresiones() !== null) {
+                    foreach ($ctx->listaExpresiones()->expresion() as $expr) {
+                        $val = $this->visit($expr);
+                        if ($val instanceof Valor) {
+                            $partes[] = $val->toString();
+                        }
+                    }
+                }
+                // Unir con espacio (comportamiento de fmt.Println en Go)
+                $this->salida .= implode(' ', $partes);
+                if ($metodo === 'Println') {
+                    $this->salida .= "\n";
+                }
+                return new Valor('nil', null);
+            }
+            
+            // Otros accesos a struct no soportados
+            $this->manejadorErrores->agregarError(
+                'Semántico',
+                "Función '$objeto.$metodo' no definida",
+                $ctx->getStart()->getLine(),
+                $ctx->getStart()->getCharPositionInLine()
+            );
+            return new Valor('nil', null);
+        }
+        
+        // La expresión debe ser un ID (nombre de función)
         $nombreFuncion = null;
         if (strpos($className, 'ExprIdContext') !== false) {
             $nombreFuncion = $exprFunc->ID()->getText();
         } else {
-            // Intentar evaluar la expresión y ver si es una función
             $this->manejadorErrores->agregarError(
                 'Semántico',
                 "Se esperaba un identificador de función, se recibió: $className",
@@ -1056,6 +1231,19 @@ class Interprete extends GramaticaBaseVisitor {
             return new Valor('nil', null);
         }
         
+        // ── Funciones built-in ──────────────────────────────────
+        $builtins = ['len', 'now', 'substr', 'typeOf'];
+        if (in_array($nombreFuncion, $builtins)) {
+            // Evaluar argumentos
+            $args = [];
+            if ($ctx->listaExpresiones() !== null) {
+                foreach ($ctx->listaExpresiones()->expresion() as $expr) {
+                    $args[] = $this->visit($expr);
+                }
+            }
+            return $this->ejecutarBuiltin($nombreFuncion, $args, $ctx);
+        }
+
         // Verificar que la función existe
         if (!isset($this->funciones[$nombreFuncion])) {
             $this->manejadorErrores->agregarError(
@@ -1080,6 +1268,175 @@ class Interprete extends GramaticaBaseVisitor {
     }
 
     /**
+     * Visita expresión nil
+     */
+    public function visitExprNil($ctx) {
+        return new Valor('nil', null);
+    }
+
+    // =========================================================
+    //  ARREGLOS
+    // =========================================================
+
+    /**
+     * Literal anidado de arreglo: {expr, expr, ...}  (p.ej. fila de una matriz)
+     * Alternativa: ExprArrayInline
+     */
+    public function visitExprArrayInline($ctx) {
+        $phpArr = [];
+        if ($ctx->listaExpresiones() !== null) {
+            foreach ($ctx->listaExpresiones()->expresion() as $exprNode) {
+                $val = $this->visit($exprNode);
+                $phpArr[] = ($val->tipo === 'array') ? $val->valor : $val->valor;
+            }
+        }
+        return new Valor('array', $phpArr);
+    }
+
+    /**
+     * Literal de arreglo: [3]int{1,2,3}  o  [2][3]int{{...},{...}}
+     * Regla: literalArreglo → tipo LBRACE listaExpresiones? RBRACE
+     * Alternativa: ExprArrayLit
+     */
+    public function visitExprArrayLit($ctx) {
+        $litCtx = $ctx->literalArreglo();
+        $tipoCtx = $litCtx->tipo();
+
+        // Calcular tamaño declarado en la primera dimensión
+        $tamano = null;
+        $tipoElem = null;
+        $this->obtenerInfoArray($tipoCtx, $tamano, $tipoElem);
+
+        // Evaluar expresiones de la lista
+        $exprs = $litCtx->listaExpresiones() !== null
+            ? $litCtx->listaExpresiones()->expresion()
+            : [];
+
+        $phpArr = [];
+        foreach ($exprs as $exprNode) {
+            $val = $this->visit($exprNode);
+            $phpArr[] = ($val->tipo === 'array') ? $val->valor : $val->valor;
+        }
+
+        // Completar con valores por defecto si faltan elementos
+        $valorDefTipo = ($tipoElem === 'array') ? 'int32' : $tipoElem;
+        while ($tamano !== null && count($phpArr) < $tamano) {
+            $def = Valor::valorPorDefecto($valorDefTipo);
+            $phpArr[] = $def->valor;
+        }
+
+        return new Valor('array', $phpArr);
+    }
+
+    /**
+     * Acceso a elemento: arr[i]  o  mat[i][j]
+     * Alternativa: ExprArrayAccess
+     */
+    public function visitExprArrayAccess($ctx) {
+        $arrVal = $this->visit($ctx->expresion(0));
+        $idxVal = $this->visit($ctx->expresion(1));
+
+        if ($arrVal->tipo !== 'array') {
+            $this->manejadorErrores->agregarError(
+                'Semántico',
+                "Se intenta indexar un valor que no es arreglo",
+                $ctx->start->getLine(),
+                $ctx->start->getCharPositionInLine()
+            );
+            return new Valor('nil', null);
+        }
+
+        $idx = (int)$idxVal->valor;
+        $arr = $arrVal->valor;
+
+        if (!array_key_exists($idx, $arr)) {
+            $this->manejadorErrores->agregarError(
+                'Semántico',
+                "Índice $idx fuera de rango del arreglo (tamaño " . count($arr) . ")",
+                $ctx->start->getLine(),
+                $ctx->start->getCharPositionInLine()
+            );
+            return new Valor('nil', null);
+        }
+
+        $elem = $arr[$idx];
+        // Si el elemento es un subarreglo, devolver como array; si no, como el valor primitivo
+        if (is_array($elem)) {
+            return new Valor('array', $elem);
+        }
+        // Intentar inferir tipo primitivo
+        if (is_bool($elem))   return new Valor('bool',    $elem);
+        if (is_float($elem))  return new Valor('float32', $elem);
+        if (is_int($elem))    return new Valor('int32',   $elem);
+        return new Valor('string', (string)$elem);
+    }
+
+    /**
+     * Asignación a elemento: arr[i] = expr  o  mat[i][j] = expr
+     * Alternativa: StmtArrayAssign
+     */
+    public function visitStmtArrayAssign($ctx) {
+        $assignCtx = $ctx->asignacionArreglo();
+        $nombre = $assignCtx->ID()->getText();
+
+        $simbolo = $this->tablaSimbolos->buscar($nombre);
+        if ($simbolo === null) {
+            $this->manejadorErrores->agregarError(
+                'Semántico',
+                "Variable '$nombre' no declarada",
+                $assignCtx->start->getLine(),
+                $assignCtx->start->getCharPositionInLine()
+            );
+            return null;
+        }
+
+        // Evaluar todos los índices
+        $indices = [];
+        foreach ($assignCtx->expresion() as $k => $exprNode) {
+            // El último expresion() es el valor de la asignación (ASSIGN expresion)
+            // Los LBRACKET/RBRACKET rodean los índices — en la gramática:
+            // asignacionArreglo: ID (LBRACKET expresion RBRACKET)+ ASSIGN expresion
+            // entonces: expresion(0)..expresion(n-2) son índices, expresion(n-1) es el valor
+            $indices[] = $this->visit($exprNode);
+        }
+
+        // Último elemento de $indices es el valor a asignar
+        $valorAsignar = array_pop($indices);
+
+        // Modificar el arreglo en la tabla de símbolos usando referencias
+        $arr = $simbolo->valor; // esto es una copia del PHP array
+
+        if (count($indices) === 1) {
+            $i = (int)$indices[0]->valor;
+            $arr[$i] = is_array($valorAsignar->valor) ? $valorAsignar->valor : $valorAsignar->valor;
+        } elseif (count($indices) === 2) {
+            $i = (int)$indices[0]->valor;
+            $j = (int)$indices[1]->valor;
+            $arr[$i][$j] = $valorAsignar->valor;
+        } elseif (count($indices) === 3) {
+            $i = (int)$indices[0]->valor;
+            $j = (int)$indices[1]->valor;
+            $k = (int)$indices[2]->valor;
+            $arr[$i][$j][$k] = $valorAsignar->valor;
+        } else {
+            // Caso general con referencia recursiva
+            $ref = &$arr;
+            foreach ($indices as $idxVal) {
+                $ref = &$ref[(int)$idxVal->valor];
+            }
+            $ref = $valorAsignar->valor;
+            unset($ref);
+        }
+
+        $this->tablaSimbolos->actualizar($nombre, $arr);
+        return null;
+    }
+
+    // =========================================================
+    //  FIN ARREGLOS
+    // =========================================================
+
+    /**
      * Visita sentencia vacía
      */
     public function visitStmtEmpty($ctx) {
@@ -1100,6 +1457,72 @@ class Interprete extends GramaticaBaseVisitor {
                     break;
                 }
             }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Visita switch/case
+     */
+    public function visitStmtSwitch($ctx) {
+        $switchCtx = $ctx->sentenciaSwitch();
+        $expresionSwitch = $this->visit($switchCtx->expresion());
+        
+        $bloqueSwitch = $switchCtx->bloqueSwitch();
+        
+        // Recorrer todos los cases
+        $caseEncontrado = false;
+        if ($bloqueSwitch->sentenciaCase() !== null) {
+            foreach ($bloqueSwitch->sentenciaCase() as $caseCtx) {
+                // Evaluar cada expresión del case (puede haber múltiples valores)
+                $listaExpresiones = $caseCtx->listaExpresiones();
+                foreach ($listaExpresiones->expresion() as $exprCtx) {
+                    $valorCase = $this->visit($exprCtx);
+                    
+                    // Comparar con la expresión del switch
+                    if ($expresionSwitch->tipo === $valorCase->tipo && 
+                        $expresionSwitch->valor === $valorCase->valor) {
+                        $caseEncontrado = true;
+                        break;
+                    }
+                }
+                
+                // Si encontramos un case que coincide, ejecutar sus sentencias
+                if ($caseEncontrado) {
+                    if ($caseCtx->sentencia() !== null) {
+                        foreach ($caseCtx->sentencia() as $stmt) {
+                            $this->visit($stmt);
+                            
+                            // Si hay break, return o continue, salir
+                            if ($this->break || $this->valorRetorno !== null || $this->continue) {
+                                break;
+                            }
+                        }
+                    }
+                    break; // Salir del foreach de cases
+                }
+            }
+        }
+        
+        // Si no se encontró ningún case, ejecutar default
+        if (!$caseEncontrado && $bloqueSwitch->sentenciaDefault() !== null) {
+            $defaultCtx = $bloqueSwitch->sentenciaDefault();
+            if ($defaultCtx->sentencia() !== null) {
+                foreach ($defaultCtx->sentencia() as $stmt) {
+                    $this->visit($stmt);
+                    
+                    // Si hay break, return o continue, salir
+                    if ($this->break || $this->valorRetorno !== null || $this->continue) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Resetear break si se usó en el switch
+        if ($this->break) {
+            $this->break = false;
         }
         
         return null;

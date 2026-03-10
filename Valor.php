@@ -48,7 +48,7 @@ class Valor {
      */
     public function toString() {
         if ($this->esNil()) {
-            return 'nil';
+            return '<nil>';
         }
         
         if ($this->tipo === 'bool') {
@@ -56,7 +56,7 @@ class Valor {
         }
         
         if ($this->tipo === 'rune') {
-            return "'" . $this->valor . "'";
+            return (string)$this->valor; // Muestra el código ASCII
         }
         
         if ($this->tipo === 'string') {

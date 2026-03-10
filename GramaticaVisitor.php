@@ -332,6 +332,26 @@ interface GramaticaVisitor extends ParseTreeVisitor
 	public function visitAssignCompound(Context\AssignCompoundContext $context);
 
 	/**
+	 * Visit a parse tree produced by the `AssignInc` labeled alternative
+	 * in {@see GramaticaParser::asignacion()}.
+	 *
+	 * @param Context\AssignIncContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitAssignInc(Context\AssignIncContext $context);
+
+	/**
+	 * Visit a parse tree produced by the `AssignDec` labeled alternative
+	 * in {@see GramaticaParser::asignacion()}.
+	 *
+	 * @param Context\AssignDecContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitAssignDec(Context\AssignDecContext $context);
+
+	/**
 	 * Visit a parse tree produced by {@see GramaticaParser::asignacionArreglo()}.
 	 *
 	 * @param Context\AsignacionArregloContext $context The parse tree.
@@ -440,6 +460,16 @@ interface GramaticaVisitor extends ParseTreeVisitor
 	public function visitSentenciaPrint(Context\SentenciaPrintContext $context);
 
 	/**
+	 * Visit a parse tree produced by the `ExprArrayInline` labeled alternative
+	 * in {@see GramaticaParser::expresion()}.
+	 *
+	 * @param Context\ExprArrayInlineContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitExprArrayInline(Context\ExprArrayInlineContext $context);
+
+	/**
 	 * Visit a parse tree produced by the `ExprAddr` labeled alternative
 	 * in {@see GramaticaParser::expresion()}.
 	 *
@@ -498,6 +528,16 @@ interface GramaticaVisitor extends ParseTreeVisitor
 	 * @return mixed The visitor result.
 	 */
 	public function visitExprRelational(Context\ExprRelationalContext $context);
+
+	/**
+	 * Visit a parse tree produced by the `ExprNil` labeled alternative
+	 * in {@see GramaticaParser::expresion()}.
+	 *
+	 * @param Context\ExprNilContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitExprNil(Context\ExprNilContext $context);
 
 	/**
 	 * Visit a parse tree produced by the `ExprAddSub` labeled alternative

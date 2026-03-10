@@ -388,6 +388,30 @@ interface GramaticaListener extends ParseTreeListener {
 	 */
 	public function exitAssignCompound(Context\AssignCompoundContext $context): void;
 	/**
+	 * Enter a parse tree produced by the `AssignInc`
+	 * labeled alternative in {@see GramaticaParser::asignacion()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterAssignInc(Context\AssignIncContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `AssignInc` labeled alternative
+	 * in {@see GramaticaParser::asignacion()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitAssignInc(Context\AssignIncContext $context): void;
+	/**
+	 * Enter a parse tree produced by the `AssignDec`
+	 * labeled alternative in {@see GramaticaParser::asignacion()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterAssignDec(Context\AssignDecContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `AssignDec` labeled alternative
+	 * in {@see GramaticaParser::asignacion()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitAssignDec(Context\AssignDecContext $context): void;
+	/**
 	 * Enter a parse tree produced by {@see GramaticaParser::asignacionArreglo()}.
 	 * @param $context The parse tree.
 	 */
@@ -508,6 +532,18 @@ interface GramaticaListener extends ParseTreeListener {
 	 */
 	public function exitSentenciaPrint(Context\SentenciaPrintContext $context): void;
 	/**
+	 * Enter a parse tree produced by the `ExprArrayInline`
+	 * labeled alternative in {@see GramaticaParser::expresion()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterExprArrayInline(Context\ExprArrayInlineContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `ExprArrayInline` labeled alternative
+	 * in {@see GramaticaParser::expresion()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitExprArrayInline(Context\ExprArrayInlineContext $context): void;
+	/**
 	 * Enter a parse tree produced by the `ExprAddr`
 	 * labeled alternative in {@see GramaticaParser::expresion()}.
 	 * @param $context The parse tree.
@@ -579,6 +615,18 @@ interface GramaticaListener extends ParseTreeListener {
 	 * @param $context The parse tree.
 	 */
 	public function exitExprRelational(Context\ExprRelationalContext $context): void;
+	/**
+	 * Enter a parse tree produced by the `ExprNil`
+	 * labeled alternative in {@see GramaticaParser::expresion()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterExprNil(Context\ExprNilContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `ExprNil` labeled alternative
+	 * in {@see GramaticaParser::expresion()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitExprNil(Context\ExprNilContext $context): void;
 	/**
 	 * Enter a parse tree produced by the `ExprAddSub`
 	 * labeled alternative in {@see GramaticaParser::expresion()}.

@@ -450,6 +450,32 @@ class GramaticaBaseListener implements GramaticaListener
 	 *
 	 * The default implementation does nothing.
 	 */
+	public function enterAssignInc(Context\AssignIncContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitAssignInc(Context\AssignIncContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterAssignDec(Context\AssignDecContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitAssignDec(Context\AssignDecContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
 	public function enterAsignacionArreglo(Context\AsignacionArregloContext $context): void {}
 
 	/**
@@ -606,6 +632,19 @@ class GramaticaBaseListener implements GramaticaListener
 	 *
 	 * The default implementation does nothing.
 	 */
+	public function enterExprArrayInline(Context\ExprArrayInlineContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitExprArrayInline(Context\ExprArrayInlineContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
 	public function enterExprAddr(Context\ExprAddrContext $context): void {}
 
 	/**
@@ -679,6 +718,19 @@ class GramaticaBaseListener implements GramaticaListener
 	 * The default implementation does nothing.
 	 */
 	public function exitExprRelational(Context\ExprRelationalContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterExprNil(Context\ExprNilContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitExprNil(Context\ExprNilContext $context): void {}
 	/**
 	 * {@inheritdoc}
 	 *

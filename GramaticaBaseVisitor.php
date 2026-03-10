@@ -382,6 +382,28 @@ class GramaticaBaseVisitor extends AbstractParseTreeVisitor implements Gramatica
 	 * The default implementation returns the result of calling
 	 * {@see self::visitChildren()} on `context`.
 	 */
+	public function visitAssignInc(Context\AssignIncContext $context)
+	{
+	    return $this->visitChildren($context);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation returns the result of calling
+	 * {@see self::visitChildren()} on `context`.
+	 */
+	public function visitAssignDec(Context\AssignDecContext $context)
+	{
+	    return $this->visitChildren($context);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation returns the result of calling
+	 * {@see self::visitChildren()} on `context`.
+	 */
 	public function visitAsignacionArreglo(Context\AsignacionArregloContext $context)
 	{
 	    return $this->visitChildren($context);
@@ -514,6 +536,17 @@ class GramaticaBaseVisitor extends AbstractParseTreeVisitor implements Gramatica
 	 * The default implementation returns the result of calling
 	 * {@see self::visitChildren()} on `context`.
 	 */
+	public function visitExprArrayInline(Context\ExprArrayInlineContext $context)
+	{
+	    return $this->visitChildren($context);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation returns the result of calling
+	 * {@see self::visitChildren()} on `context`.
+	 */
 	public function visitExprAddr(Context\ExprAddrContext $context)
 	{
 	    return $this->visitChildren($context);
@@ -570,6 +603,17 @@ class GramaticaBaseVisitor extends AbstractParseTreeVisitor implements Gramatica
 	 * {@see self::visitChildren()} on `context`.
 	 */
 	public function visitExprRelational(Context\ExprRelationalContext $context)
+	{
+	    return $this->visitChildren($context);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation returns the result of calling
+	 * {@see self::visitChildren()} on `context`.
+	 */
+	public function visitExprNil(Context\ExprNilContext $context)
 	{
 	    return $this->visitChildren($context);
 	}

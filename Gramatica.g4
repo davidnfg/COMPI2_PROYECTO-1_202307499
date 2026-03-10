@@ -99,6 +99,8 @@ declaracionCorta
 asignacion
     : ID (COMMA ID)* ASSIGN listaExpresiones                                      # AssignSimple
     | ID op=(PLUS_ASSIGN | MINUS_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN) expresion # AssignCompound
+    | ID PLUS_PLUS                                                                 # AssignInc
+    | ID MINUS_MINUS                                                               # AssignDec
     ;
 
 asignacionArreglo
@@ -188,8 +190,10 @@ expresion
     | expresion AND expresion                                         # ExprAnd
     | expresion OR expresion                                          # ExprOr
     
+    | LBRACE listaExpresiones? RBRACE                                 # ExprArrayInline
     | ID                                                              # ExprId
     | literal                                                         # ExprLiteral
+    | KW_NIL                                                          # ExprNil
     ;
 
 listaExpresiones
@@ -273,6 +277,8 @@ FALSE       : 'false';
 // -------------------------------------------------------------
 
 DECLARE_ASSIGN : ':=';
+PLUS_PLUS      : '++';
+MINUS_MINUS    : '--';
 PLUS_ASSIGN    : '+=';
 MINUS_ASSIGN   : '-=';
 MUL_ASSIGN     : '*=';
