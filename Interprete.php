@@ -171,8 +171,8 @@ class Interprete extends GramaticaBaseVisitor {
                 }
 
             case 'now':
-                // Devuelve timestamp Unix como int64
-                return new Valor('int32', (int)time());
+                // Devuelve fecha y hora actual como string formateado
+                return new Valor('string', date('Y-m-d H:i:s'));
 
             case 'substr':
                 if (count($args) < 3) {
@@ -222,13 +222,30 @@ class Interprete extends GramaticaBaseVisitor {
         $this->tablaSimbolos->entrarAmbito($nombre);
         $this->enFuncion = true;
 
+        // Mapa de parámetros por referencia: paramName => originalVarName
+        $refMap = [];
+
         // Procesar parámetros: crear variables locales con los valores de los argumentos
         for ($i = 0; $i < count($parametros); $i++) {
             $nombreParam = $parametros[$i]['nombre'];
-            $tipoParam = $parametros[$i]['tipo'];
-            $valorArg = $argumentos[$i];
-            
-            // Validar tipo del argumento
+            $tipoParam   = $parametros[$i]['tipo'];
+            $valorArg    = $argumentos[$i];
+
+            // Detectar parámetro puntero (*T) + argumento referencia (&var)
+            $esPuntero = (strlen($tipoParam) > 0 && $tipoParam[0] === '*');
+            if ($esPuntero && $valorArg->tipo === 'ref') {
+                // Guardar asociación para write-back posterior
+                $refMap[$nombreParam] = $valorArg->valor; // valor = nombre de variable original
+                // Obtener valor actual de la variable original
+                $simOrig = $this->tablaSimbolos->buscar($valorArg->valor);
+                $valorReal = ($simOrig !== null)
+                    ? new Valor($simOrig->tipo, $simOrig->valor)
+                    : new Valor('nil', null);
+                $tipoEfectivo = $simOrig ? $simOrig->tipo : 'nil';
+                $this->tablaSimbolos->insertar($nombreParam, $tipoEfectivo, $valorReal->valor, 0, 0);
+                continue;
+            }
+
             // Si el tipo del parámetro empieza con '[', es un arreglo — compatibilizar con 'array'
             $esArrayParam = (strlen($tipoParam) > 0 && $tipoParam[0] === '[') || $tipoParam === 'array';
             $tipoEfectivo = $esArrayParam ? 'array' : $tipoParam;
@@ -242,17 +259,21 @@ class Interprete extends GramaticaBaseVisitor {
             }
             
             // Insertar parámetro como variable local
-            $this->tablaSimbolos->insertar(
-                $nombreParam,
-                $tipoEfectivo,
-                $valorArg->valor,
-                0,
-                0
-            );
+            $this->tablaSimbolos->insertar($nombreParam, $tipoEfectivo, $valorArg->valor, 0, 0);
         }
 
         // Ejecutar el cuerpo de la función
         $this->visit($funcDecl->bloque());
+
+        // Write-back de parámetros por referencia:
+        // actualizar() recorre scopes de inner a outer — la var original está en el ámbito padre,
+        // así que se actualiza correctamente sin salir del scope actual.
+        foreach ($refMap as $paramNombre => $varOriginal) {
+            $simLocal = $this->tablaSimbolos->buscar($paramNombre);
+            if ($simLocal !== null) {
+                $this->tablaSimbolos->actualizar($varOriginal, $simLocal->valor);
+            }
+        }
 
         // Capturar valor de retorno
         $resultado = $this->valorRetorno;
@@ -555,10 +576,16 @@ class Interprete extends GramaticaBaseVisitor {
     public function visitStmtShortDecl($ctx) {
         $shortDecl = $ctx->declaracionCorta();
         $ids = $shortDecl->ID();
+        $exprs = $shortDecl->listaExpresiones()->expresion();
         $valores = [];
-        
-        foreach ($shortDecl->listaExpresiones()->expresion() as $expr) {
+
+        foreach ($exprs as $expr) {
             $valores[] = $this->visit($expr);
+        }
+
+        // Si hay un solo resultado de tipo 'tuple' y múltiples IDs, desempaquetar
+        if (count($valores) === 1 && count($ids) > 1 && $valores[0]->tipo === 'tuple') {
+            $valores = $valores[0]->valor; // array de Valor
         }
         
         foreach ($ids as $i => $idNode) {
@@ -586,12 +613,8 @@ class Interprete extends GramaticaBaseVisitor {
             );
             
             if (!$exito) {
-                $this->manejadorErrores->agregarError(
-                    'Semántico',
-                    "Variable '$nombre' ya declarada en este ámbito",
-                    $idNode->getSymbol()->getLine(),
-                    $idNode->getSymbol()->getCharPositionInLine()
-                );
+                // Si ya existe, actualizar (re-asignación en múltiple retorno)
+                $this->tablaSimbolos->actualizar($nombre, $valor->valor);
             }
         }
         
@@ -1269,6 +1292,15 @@ class Interprete extends GramaticaBaseVisitor {
         
         // Ejecutar la función
         return $this->ejecutarFuncion($nombreFuncion, $argumentos);
+    }
+
+    /**
+     * Expresión de dirección: &varName → referencia para parámetros puntero
+     * Alternativa: ExprAddr
+     */
+    public function visitExprAddr($ctx) {
+        $nombre = $ctx->ID()->getText();
+        return new Valor('ref', $nombre);
     }
 
     /**
