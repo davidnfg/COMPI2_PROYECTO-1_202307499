@@ -197,7 +197,7 @@ expresion
     ;
 
 listaExpresiones
-    : expresion (COMMA expresion)*
+    : expresion (COMMA expresion)* COMMA?
     ;
 
 // -------------------------------------------------------------

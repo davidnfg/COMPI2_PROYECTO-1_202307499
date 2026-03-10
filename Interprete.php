@@ -229,7 +229,11 @@ class Interprete extends GramaticaBaseVisitor {
             $valorArg = $argumentos[$i];
             
             // Validar tipo del argumento
-            if ($valorArg->tipo !== $tipoParam) {
+            // Si el tipo del parámetro empieza con '[', es un arreglo — compatibilizar con 'array'
+            $esArrayParam = (strlen($tipoParam) > 0 && $tipoParam[0] === '[') || $tipoParam === 'array';
+            $tipoEfectivo = $esArrayParam ? 'array' : $tipoParam;
+
+            if ($valorArg->tipo !== $tipoEfectivo && !($esArrayParam && is_array($valorArg->valor))) {
                 $this->manejadorErrores->agregarError(
                     'Semántico',
                     "El parámetro '$nombreParam' espera tipo '$tipoParam' pero se recibió '{$valorArg->tipo}'",
@@ -240,7 +244,7 @@ class Interprete extends GramaticaBaseVisitor {
             // Insertar parámetro como variable local
             $this->tablaSimbolos->insertar(
                 $nombreParam,
-                $tipoParam,
+                $tipoEfectivo,
                 $valorArg->valor,
                 0,
                 0
@@ -1336,7 +1340,7 @@ class Interprete extends GramaticaBaseVisitor {
         $arrVal = $this->visit($ctx->expresion(0));
         $idxVal = $this->visit($ctx->expresion(1));
 
-        if ($arrVal->tipo !== 'array') {
+        if (!is_array($arrVal->valor)) {
             $this->manejadorErrores->agregarError(
                 'Semántico',
                 "Se intenta indexar un valor que no es arreglo",
