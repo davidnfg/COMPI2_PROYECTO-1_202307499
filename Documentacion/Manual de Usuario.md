@@ -39,7 +39,7 @@ El script abre automaticamente el navegador en `http://localhost:8080`.
 
 ### Imagen 1
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/1.png" alt="Imagen 1 - ejecucion de ./start.sh en terminal" width="900">
+![Imagen 1 - ejecucion de ./start.sh en terminal](img/1.png)
 
 ## Paso 2. Verificar apertura de la interfaz
 
@@ -50,7 +50,7 @@ Debe mostrarse la pantalla principal con:
 
 ### Imagen 2
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/2.png" alt="Imagen 2 - vista general de la interfaz web" width="900">
+![Imagen 2 - vista general de la interfaz web](img/2.png)
 
 ---
 
@@ -68,7 +68,7 @@ Botones disponibles:
 
 ### Imagen 3
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/2.png" alt="Imagen 3 - barra superior con botones resaltados" width="900">
+![Imagen 3 - barra superior con botones resaltados](img/2.png)
 
 
 ## 4.2 Panel de editor
@@ -82,7 +82,7 @@ Funciones del editor:
 
 ### Imagen 4
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso2.png" alt="Imagen 4 - editor con codigo cargado" width="900">
+![Imagen 4 - editor con codigo cargado](img/paso2.png)
 
 
 ## 4.3 Panel de resultados
@@ -95,7 +95,7 @@ Pestanas disponibles:
 
 ### Imagen 5
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso3.png" alt="Imagen 5 - panel de salida con pestanas" width="900">
+![Imagen 5 - panel de salida con pestanas](img/paso3.png)
 
 ---
 
@@ -113,7 +113,7 @@ Ejemplos sugeridos:
 
 ### Imagen 6
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso1.png" alt="Imagen 6 - boton Cargar y selector de archivo" width="900">
+![Imagen 6 - boton Cargar y selector de archivo](img/paso1.png)
 
 ## Paso 2. Verificar codigo en el editor
 
@@ -121,7 +121,7 @@ Confirma que el contenido aparezca correctamente en el panel izquierdo.
 
 ### Imagen 7
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso2.png" alt="Imagen 7 - codigo visible en editor luego de cargar" width="900">
+![Imagen 7 - codigo visible en editor luego de cargar](img/paso2.png)
 
 ## Paso 3. Ejecutar programa
 
@@ -129,7 +129,7 @@ Haz clic en `Ejecutar` o presiona `Ctrl + Enter`.
 
 ### Imagen 8
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso3.png" alt="Imagen 8 - boton Ejecutar en accion" width="900">
+![Imagen 8 - boton Ejecutar en accion](img/paso3.png)
 
 ## Paso 4. Revisar salida en consola
 
@@ -137,7 +137,7 @@ Ve a la pestana `Consola` para validar resultados del programa.
 
 ### Imagen 9
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso3.png" alt="Imagen 9 - consola con salida correcta" width="900">
+![Imagen 9 - consola con salida correcta](img/paso3.png)
 
 ## Paso 5. Revisar errores (si existen)
 
@@ -150,7 +150,7 @@ Ve a la pestana `Errores` para identificar:
 
 ### Imagen 10
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso4.png" alt="Imagen 10 - tabla de errores" width="900">
+![Imagen 10 - tabla de errores](img/paso4.png)
 
 ## Paso 6. Revisar tabla de simbolos
 
@@ -163,7 +163,7 @@ Abre `Tabla de Simbolos` para verificar:
 
 ### Imagen 11
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso4.png" alt="Imagen 11 - tabla de simbolos despues de ejecutar" width="900">
+![Imagen 11 - tabla de simbolos despues de ejecutar](img/paso4.png)
 
 ## Paso 7. Descargar reportes
 
@@ -175,7 +175,7 @@ Usa los botones del panel derecho:
 
 ### Imagen 12
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso7.png" alt="Imagen 12 - botones de descarga de reportes" width="900">
+![Imagen 12 - botones de descarga de reportes](img/paso7.png)
 
 ## Paso 8. Limpiar entorno de trabajo
 
@@ -188,7 +188,7 @@ Haz clic en `Limpiar` para:
 
 ### Imagen 13
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/paso8.png" alt="Imagen 13 - interfaz limpia tras pulsar Limpiar" width="900">
+![Imagen 13 - interfaz limpia tras pulsar Limpiar](img/paso8.png)
 
 ---
 
@@ -202,4 +202,4 @@ Ctrl + C
 
 ### Imagen 14
 
-<img src="file:///home/fabro/Documentos/COMPI2/COMPI2_PROYECTO%231_202307499/Documentacion/img/1.png" alt="Imagen 14 - terminal deteniendo servidor con Ctrl + C" width="900">
+![Imagen 14 - terminal deteniendo servidor con Ctrl + C](img/1.png)
